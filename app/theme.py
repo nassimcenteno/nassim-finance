@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from datetime import datetime
 import calendar as _cal
 
@@ -77,64 +78,32 @@ html, body { margin:0; padding:0; }
   color: #F0F0F5 !important;
 }
 
-/* Hide Streamlit chrome — but NOT stHeader (it holds the native mobile hamburger) */
+/* Hide ALL Streamlit chrome incl. native header — custom mobile topbar is injected
+   via components.html (real iframe JS that survives Streamlit Cloud's sanitizer). */
 #MainMenu, footer,
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
 [data-testid="stAppDeployButton"],
 [data-testid="stToolbar"],
+[data-testid="stHeader"],
 [data-testid="stHeaderFill"],
 [data-testid="stLogoSpacer"],
 [data-testid="stSidebarNav"],
 [data-testid="stSidebarNavItems"],
 [data-testid="stSidebarNavSeparator"] { display:none !important; }
 
-/* Desktop: hide header entirely (sidebar always visible, no topbar needed) */
-@media (min-width: 769px) {
-  [data-testid="stHeader"] { display:none !important; }
-}
-
-/* Mobile: native header = clean dark topbar holding the native hamburger */
+/* Mobile: responsive layout + sidebar as overlay below the injected 52px topbar */
 @media (max-width: 768px) {
-  [data-testid="stHeader"] {
-    display: flex !important;
-    align-items: center !important;
-    height: 52px !important;
-    min-height: 52px !important;
-    background: rgba(8,9,14,.97) !important;
-    border-bottom: 1px solid rgba(255,255,255,.06) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    backdrop-filter: blur(16px) !important;
-    padding: 0 4px !important;
-    z-index: 1100 !important;
-  }
-  /* Native hamburger (open) + close arrow — clean, visible, touch-sized */
-  [data-testid="stSidebarCollapsedControl"] {
-    display: flex !important;
-    align-items: center !important;
-    top: 6px !important; left: 6px !important;
-  }
-  [data-testid="stSidebarCollapsedControl"] button,
-  [data-testid="stSidebarCollapseButton"] button {
-    width: 42px !important; height: 42px !important;
-    color: rgba(240,240,245,.85) !important;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 8px !important;
-  }
-  [data-testid="stSidebarCollapsedControl"] svg,
-  [data-testid="stSidebarCollapseButton"] svg {
-    width: 22px !important; height: 22px !important;
-    color: rgba(240,240,245,.85) !important;
-  }
-  /* Content clears the fixed 52px header — fixes the top gap */
+  /* Content clears the fixed 52px topbar — fixes the top gap */
   [data-testid="stMainBlockContainer"] {
     padding: 64px 14px 48px !important;
   }
-  /* Sidebar overlay shadow */
+  /* Sidebar overlay: sits below the topbar, above the backdrop */
   [data-testid="stSidebar"] {
+    top: 52px !important;
+    height: calc(100vh - 52px) !important;
+    z-index: 999999 !important;
     box-shadow: 4px 0 40px rgba(0,0,0,.7) !important;
-    z-index: 1050 !important;
   }
   /* Responsive layout tweaks */
   .nf-stat-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
@@ -478,9 +447,89 @@ _LAYOUT_PATCH = (
 )
 
 
+# Mobile topbar + hamburger, injected via components.html (real iframe JS — runs on
+# Streamlit Cloud, unlike st.markdown which strips event handlers). The iframe is
+# same-origin (srcdoc) so it can reach window.parent.document, build a fixed topbar
+# in the parent body, and toggle the sidebar by clicking Streamlit's native (hidden)
+# expand/collapse buttons — which respond to .click() even while display:none.
+_MOBILE_NAV = r"""
+<script>
+(function(){
+  var pw = window.parent, pd = pw.document;
+  function q(s){ return pd.querySelector(s); }
+  function isMob(){ return pw.innerWidth <= 768; }
+  function cleanup(){
+    var b = pd.getElementById('nf-bar'); if(b) b.remove();
+    var bd = pd.getElementById('nf-backdrop'); if(bd) bd.remove();
+  }
+  function sbOpen(){
+    var sb = q('[data-testid="stSidebar"]'); if(!sb) return false;
+    var r = sb.getBoundingClientRect();
+    return r.width > 0 && r.left > -20 && r.right > 20;
+  }
+  function openSb(){ var b = q('[data-testid="stExpandSidebarButton"]'); if(b) b.click(); }
+  function closeSb(){
+    var b = q('[data-testid="stSidebarCollapseButton"] button')
+         || q('[data-testid="stSidebarCollapseButton"]');
+    if(b) b.click();
+  }
+  function showBd(){
+    if(pd.getElementById('nf-backdrop')) return;
+    var bd = pd.createElement('div'); bd.id = 'nf-backdrop';
+    bd.style.cssText = 'position:fixed;left:0;right:0;top:52px;bottom:0;'
+      + 'background:rgba(0,0,0,.5);z-index:999990;';
+    bd.addEventListener('click', function(){ closeSb(); setTimeout(sync,80); });
+    pd.body.appendChild(bd);
+  }
+  function hideBd(){ var bd = pd.getElementById('nf-backdrop'); if(bd) bd.remove(); }
+  function sync(){ if(!isMob()){ hideBd(); return; } if(sbOpen()) showBd(); else hideBd(); }
+  function build(){
+    if(!isMob()){ cleanup(); return; }
+    if(!pd.getElementById('nf-bar')){
+      var bar = pd.createElement('div'); bar.id = 'nf-bar';
+      bar.style.cssText = 'position:fixed;top:0;left:0;right:0;height:52px;'
+        + 'background:rgba(8,9,14,.98);z-index:1000000;display:flex;align-items:center;'
+        + 'padding:0 6px;border-bottom:1px solid rgba(255,255,255,.07);'
+        + '-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);';
+      var btn = pd.createElement('button'); btn.setAttribute('aria-label','Menu');
+      btn.style.cssText = 'width:44px;height:44px;background:transparent;border:none;'
+        + 'cursor:pointer;display:flex;align-items:center;justify-content:center;'
+        + 'border-radius:9px;padding:0;flex-shrink:0;';
+      btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" '
+        + 'stroke="#F0F0F5" stroke-width="2.4" stroke-linecap="round">'
+        + '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>'
+        + '<line x1="3" y1="18" x2="21" y2="18"/></svg>';
+      btn.addEventListener('click', function(){
+        if(sbOpen()){ closeSb(); } else { openSb(); }
+        setTimeout(sync,80); setTimeout(sync,260);
+      });
+      bar.appendChild(btn);
+      var lbl = pd.createElement('div');
+      lbl.style.cssText = 'margin-left:2px;font-size:14px;font-weight:700;'
+        + 'color:#F0F0F5;letter-spacing:-.02em;';
+      lbl.textContent = 'Nassim Finance';
+      bar.appendChild(lbl);
+      pd.body.appendChild(bar);
+    }
+    sync();
+  }
+  build();
+  [200,600,1200,2500].forEach(function(ms){ setTimeout(build, ms); });
+  if(!pw.__nfObs){
+    pw.__nfObs = 1; var t;
+    new pw.MutationObserver(function(){ clearTimeout(t); t = setTimeout(build, 60); })
+      .observe(pd.body, {childList:true, subtree:true});
+    pw.addEventListener('resize', build);
+  }
+})();
+</script>
+"""
+
+
 def inject_css() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
     st.markdown(_LAYOUT_PATCH, unsafe_allow_html=True)
+    components.html(_MOBILE_NAV, height=0)
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
