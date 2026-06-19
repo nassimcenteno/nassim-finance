@@ -15,7 +15,7 @@ from app.theme import (
 )
 
 st.set_page_config(page_title="Gastos Diarios · Nassim Finance",
-                   page_icon="📅", layout="wide", initial_sidebar_state="expanded")
+                   page_icon="📅", layout="wide", initial_sidebar_state="auto")
 inject_css()
 mes = render_sidebar()
 topbar("Gastos Diarios", f"Gasto por día del mes · {fmt_month(mes)}")

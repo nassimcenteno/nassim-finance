@@ -11,7 +11,7 @@ from app.theme import (
 )
 
 st.set_page_config(page_title="Presupuesto · Nassim Finance",
-                   page_icon="⚙️", layout="wide", initial_sidebar_state="expanded")
+                   page_icon="⚙️", layout="wide", initial_sidebar_state="auto")
 inject_css()
 mes = render_sidebar()
 topbar("Presupuesto", f"Configura tu presupuesto mensual · {fmt_month(mes)}")

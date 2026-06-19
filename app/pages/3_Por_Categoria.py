@@ -12,7 +12,7 @@ from app.theme import (
 )
 
 st.set_page_config(page_title="Por Categoría · Nassim Finance",
-                   page_icon="🗂️", layout="wide", initial_sidebar_state="expanded")
+                   page_icon="🗂️", layout="wide", initial_sidebar_state="auto")
 inject_css()
 mes = render_sidebar()
 topbar("Por Categoría", f"Distribución y detalle · {fmt_month(mes)}")

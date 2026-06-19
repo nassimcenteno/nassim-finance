@@ -12,7 +12,7 @@ from app.theme import (
 )
 
 st.set_page_config(page_title="Análisis · Nassim Finance",
-                   page_icon="📊", layout="wide", initial_sidebar_state="expanded")
+                   page_icon="📊", layout="wide", initial_sidebar_state="auto")
 inject_css()
 render_sidebar()
 topbar("Análisis", "Tendencias y estadísticas históricas")

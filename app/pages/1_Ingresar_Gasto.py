@@ -11,7 +11,7 @@ from tools.expense_parser import parse
 from app.theme import inject_css, render_sidebar, topbar, GREEN, RED, ACCENT, S1, BORDER, TXT3
 
 st.set_page_config(page_title="Ingresar Gasto · Nassim Finance",
-                   page_icon="➕", layout="wide", initial_sidebar_state="expanded")
+                   page_icon="➕", layout="wide", initial_sidebar_state="auto")
 inject_css()
 render_sidebar()
 topbar("Ingresar Gasto", "Registra un nuevo gasto")

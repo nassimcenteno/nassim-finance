@@ -82,13 +82,83 @@ html, body { margin:0; padding:0; }
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
 [data-testid="stAppDeployButton"],
-[data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stHeaderFill"],
 [data-testid="stLogoSpacer"],
 [data-testid="stSidebarNav"],
 [data-testid="stSidebarNavItems"],
 [data-testid="stSidebarNavSeparator"] { display:none !important; }
+
+/* Desktop: hide header entirely (sidebar always visible, no topbar needed) */
+@media (min-width: 769px) {
+  [data-testid="stHeader"] { display:none !important; }
+}
+
+/* Mobile: show header as dark fintech topbar */
+@media (max-width: 768px) {
+  [data-testid="stHeader"] {
+    display: flex !important;
+    align-items: center !important;
+    background: rgba(8,9,14,.97) !important;
+    border-bottom: 1px solid rgba(255,255,255,.06) !important;
+    height: 52px !important;
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important;
+    z-index: 1001 !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    padding: 0 4px !important;
+  }
+  /* Hamburger / collapse buttons */
+  [data-testid="stSidebarCollapsedControl"] button,
+  [data-testid="stSidebarCollapseButton"] button {
+    color: rgba(240,240,245,.75) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    width: 40px !important; height: 40px !important;
+    display: flex !important;
+    align-items: center !important; justify-content: center !important;
+    transition: background .15s !important;
+  }
+  [data-testid="stSidebarCollapsedControl"] button:hover,
+  [data-testid="stSidebarCollapseButton"] button:hover {
+    background: rgba(255,255,255,.08) !important;
+  }
+  [data-testid="stSidebarCollapsedControl"] svg,
+  [data-testid="stSidebarCollapseButton"] svg {
+    width: 20px !important; height: 20px !important;
+    color: rgba(240,240,245,.75) !important;
+  }
+  /* Sidebar: full-height overlay */
+  [data-testid="stSidebar"] {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    box-shadow: 8px 0 40px rgba(0,0,0,.7) !important;
+    transition: transform .25s cubic-bezier(.4,0,.2,1) !important;
+  }
+  /* Sidebar inner header: show close button row */
+  [data-testid="stSidebarHeader"] {
+    height: 52px !important;
+    min-height: 52px !important;
+    overflow: visible !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 8px !important;
+    border-bottom: 1px solid rgba(255,255,255,.06) !important;
+  }
+  /* Backdrop overlay */
+  #nf-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,.55) !important;
+    z-index: 999 !important;
+    backdrop-filter: blur(2px) !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+  }
+}
 
 /* Fix main content top gap — the actual block container testid in Streamlit 1.58 */
 [data-testid="stMainBlockContainer"] { padding-top: 24px !important; }
@@ -425,21 +495,48 @@ div[data-testid="stWarning"] {
 _LAYOUT_PATCH = (
     '<div style="display:none"><img src="x" onerror="'
     "(function(){if(window.__nfP)return;window.__nfP=1;var d=document;"
+    "function isMob(){return window.innerWidth<=768;}"
     "function p(){"
+    "var mob=isMob();"
     "var sbh=d.querySelector('[data-testid=stSidebarHeader]');"
-    "if(sbh){sbh.style.setProperty('height','0','important');"
+    "if(sbh){"
+    "if(mob){"
+    "sbh.style.removeProperty('height');"
+    "sbh.style.removeProperty('min-height');"
+    "sbh.style.removeProperty('overflow');"
+    "sbh.style.removeProperty('padding');"
+    "sbh.style.removeProperty('margin');}"
+    "else{"
+    "sbh.style.setProperty('height','0','important');"
     "sbh.style.setProperty('min-height','0','important');"
     "sbh.style.setProperty('overflow','hidden','important');"
     "sbh.style.setProperty('padding','0','important');"
-    "sbh.style.setProperty('margin','0','important');}"
+    "sbh.style.setProperty('margin','0','important');}}"
     "var sc=d.querySelector('[data-testid=stSidebarContent]');"
     "if(sc)sc.style.setProperty('padding-top','0','important');"
     "var su=d.querySelector('[data-testid=stSidebarUserContent]');"
     "if(su)su.style.setProperty('padding-top','0','important');"
     "var mb=d.querySelector('[data-testid=stMainBlockContainer]');"
-    "if(mb)mb.style.setProperty('padding-top','24px','important');}"
+    "if(mb)mb.style.setProperty('padding-top',mob?'68px':'24px','important');}"
+    "function setupBackdrop(){"
+    "if(!isMob())return;"
+    "function makeBd(){"
+    "if(d.getElementById('nf-backdrop'))return;"
+    "var bd=d.createElement('div');"
+    "bd.id='nf-backdrop';"
+    "bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);';"
+    "bd.onclick=function(){var cb=d.querySelector('[data-testid=stSidebarCollapseButton] button');if(cb)cb.click();};"
+    "d.body.insertBefore(bd,d.body.firstChild);}"
+    "function rmBd(){var bd=d.getElementById('nf-backdrop');if(bd)bd.remove();}"
+    "function bindBtns(){"
+    "var exp=d.querySelector('[data-testid=stSidebarCollapsedControl] button');"
+    "var col=d.querySelector('[data-testid=stSidebarCollapseButton] button');"
+    "if(exp&&!exp.__nfBound){exp.__nfBound=1;exp.addEventListener('click',function(){setTimeout(makeBd,50);});}"
+    "if(col&&!col.__nfBound){col.__nfBound=1;col.addEventListener('click',function(){setTimeout(rmBd,50);});}}"
+    "bindBtns();setTimeout(bindBtns,500);setTimeout(bindBtns,1500);}"
     "p();[80,300,700,1500].forEach(function(ms){setTimeout(p,ms)});"
-    "var t;new MutationObserver(function(){clearTimeout(t);t=setTimeout(p,25)})"
+    "setTimeout(setupBackdrop,300);"
+    "var t;new MutationObserver(function(){clearTimeout(t);t=setTimeout(function(){p();},25)})"
     '.observe(d.body,{childList:true,subtree:true})})()"></div>'
 )
 
