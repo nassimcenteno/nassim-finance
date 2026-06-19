@@ -77,86 +77,46 @@ html, body { margin:0; padding:0; }
   color: #F0F0F5 !important;
 }
 
-/* Hide ALL Streamlit chrome */
+/* Hide ALL Streamlit chrome — stHeader included (custom topbar injected via JS on mobile) */
 #MainMenu, footer,
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
 [data-testid="stAppDeployButton"],
 [data-testid="stToolbar"],
+[data-testid="stHeader"],
 [data-testid="stHeaderFill"],
 [data-testid="stLogoSpacer"],
 [data-testid="stSidebarNav"],
 [data-testid="stSidebarNavItems"],
 [data-testid="stSidebarNavSeparator"] { display:none !important; }
 
-/* Desktop: hide header entirely (sidebar always visible, no topbar needed) */
-@media (min-width: 769px) {
-  [data-testid="stHeader"] { display:none !important; }
-}
-
-/* Mobile: show header as dark fintech topbar */
+/* Mobile */
 @media (max-width: 768px) {
-  [data-testid="stHeader"] {
-    display: flex !important;
-    align-items: center !important;
-    background: rgba(8,9,14,.97) !important;
-    border-bottom: 1px solid rgba(255,255,255,.06) !important;
-    height: 52px !important;
-    position: fixed !important;
-    top: 0 !important; left: 0 !important; right: 0 !important;
-    z-index: 1001 !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    padding: 0 4px !important;
-  }
-  /* Hamburger / collapse buttons */
-  [data-testid="stSidebarCollapsedControl"] button,
-  [data-testid="stSidebarCollapseButton"] button {
-    color: rgba(240,240,245,.75) !important;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 8px !important;
-    width: 40px !important; height: 40px !important;
-    display: flex !important;
-    align-items: center !important; justify-content: center !important;
-    transition: background .15s !important;
-  }
-  [data-testid="stSidebarCollapsedControl"] button:hover,
-  [data-testid="stSidebarCollapseButton"] button:hover {
-    background: rgba(255,255,255,.08) !important;
-  }
-  [data-testid="stSidebarCollapsedControl"] svg,
-  [data-testid="stSidebarCollapseButton"] svg {
-    width: 20px !important; height: 20px !important;
-    color: rgba(240,240,245,.75) !important;
-  }
-  /* Sidebar: full-height overlay */
+  .main .block-container { padding: 64px 12px 48px !important; }
+  section[data-testid="stMain"] { margin-left: 0 !important; width: 100% !important; }
   [data-testid="stSidebar"] {
     position: fixed !important;
-    top: 0 !important; left: 0 !important;
-    height: 100vh !important;
-    z-index: 1000 !important;
-    box-shadow: 8px 0 40px rgba(0,0,0,.7) !important;
-    transition: transform .25s cubic-bezier(.4,0,.2,1) !important;
+    top: 52px !important; left: 0 !important;
+    height: calc(100vh - 52px) !important;
+    z-index: 1050 !important;
+    box-shadow: 4px 0 40px rgba(0,0,0,.7) !important;
   }
-  /* Sidebar inner header: show close button row */
+  [data-testid="stSidebarCollapsedControl"] { display:none !important; }
   [data-testid="stSidebarHeader"] {
-    height: 52px !important;
-    min-height: 52px !important;
-    overflow: visible !important;
-    display: flex !important;
-    align-items: center !important;
-    padding: 0 8px !important;
-    border-bottom: 1px solid rgba(255,255,255,.06) !important;
+    height: 0 !important; min-height: 0 !important;
+    overflow: hidden !important; padding: 0 !important; margin: 0 !important;
   }
-  /* Backdrop overlay */
+  .nf-stat-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .nf-hero-card { padding: 24px 20px 20px !important; border-radius: 16px !important; }
+  .nf-hero-amount { font-size: 52px !important; line-height: .95 !important; }
+  .nf-topbar { margin-bottom: 16px !important; }
+  .nf-topbar-title { font-size: 16px !important; }
+  [data-testid="stFormSubmitButton"] > button,
+  [data-testid="stButton"] > button { min-height: 48px !important; }
   #nf-backdrop {
-    position: fixed !important;
-    inset: 0 !important;
-    background: rgba(0,0,0,.55) !important;
-    z-index: 999 !important;
-    backdrop-filter: blur(2px) !important;
-    -webkit-backdrop-filter: blur(2px) !important;
+    position: fixed !important; inset: 0 !important; top: 52px !important;
+    background: rgba(0,0,0,.55) !important; z-index: 1040 !important;
+    backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important;
   }
 }
 
@@ -431,38 +391,6 @@ div[data-testid="stWarning"] {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.14); }
 
-/* ── Responsive mobile ── */
-@media (max-width: 768px) {
-  .main .block-container {
-    padding: 16px 12px 48px !important;
-  }
-
-  /* Stat cards — 2×2 grid */
-  .nf-stat-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
-  }
-
-  /* Hero card — smaller padding + font */
-  .nf-hero-card {
-    padding: 24px 20px 20px !important;
-    border-radius: 16px !important;
-  }
-  .nf-hero-amount {
-    font-size: 52px !important;
-    line-height: .95 !important;
-  }
-
-  /* Topbar — tighter */
-  .nf-topbar { margin-bottom: 16px !important; }
-  .nf-topbar-title { font-size: 16px !important; }
-
-  /* Touch targets — min 48px */
-  [data-testid="stFormSubmitButton"] > button,
-  [data-testid="stButton"] > button {
-    min-height: 48px !important;
-  }
-}
 
 /* ── Hero card tag pills ── */
 .nf-tag {
@@ -491,54 +419,87 @@ div[data-testid="stWarning"] {
 """
 
 
-# img onerror executes JS directly in the main page context — no iframe, no sandbox.
-# Inline styles set via JS beat Emotion CSS (which regenerates dynamically and ignores !important).
+# img onerror executes JS in main page context — beats Emotion CSS inline styles.
+# Injects a custom fixed topbar + hamburger on mobile. Sidebar toggled via programmatic .click().
 _LAYOUT_PATCH = (
     '<div style="display:none"><img src="x" onerror="'
-    "(function(){if(window.__nfP)return;window.__nfP=1;var d=document;"
+    "(function(){if(window.__nfP)return;window.__nfP=1;"
+    "var d=document;"
     "function isMob(){return window.innerWidth<=768;}"
+    # Fix inline layout styles (Emotion overrides !important)
     "function p(){"
-    "var mob=isMob();"
     "var sbh=d.querySelector('[data-testid=stSidebarHeader]');"
     "if(sbh){"
-    "if(mob){"
-    "sbh.style.removeProperty('height');"
-    "sbh.style.removeProperty('min-height');"
-    "sbh.style.removeProperty('overflow');"
-    "sbh.style.removeProperty('padding');"
-    "sbh.style.removeProperty('margin');}"
-    "else{"
     "sbh.style.setProperty('height','0','important');"
     "sbh.style.setProperty('min-height','0','important');"
     "sbh.style.setProperty('overflow','hidden','important');"
     "sbh.style.setProperty('padding','0','important');"
-    "sbh.style.setProperty('margin','0','important');}}"
+    "sbh.style.setProperty('margin','0','important');}"
     "var sc=d.querySelector('[data-testid=stSidebarContent]');"
     "if(sc)sc.style.setProperty('padding-top','0','important');"
     "var su=d.querySelector('[data-testid=stSidebarUserContent]');"
     "if(su)su.style.setProperty('padding-top','0','important');"
     "var mb=d.querySelector('[data-testid=stMainBlockContainer]');"
-    "if(mb)mb.style.setProperty('padding-top',mob?'68px':'24px','important');}"
-    "function setupBackdrop(){"
-    "if(!isMob())return;"
-    "function makeBd(){"
+    "if(mb)mb.style.setProperty('padding-top',isMob()?'64px':'24px','important');"
+    "var mn=d.querySelector('section[data-testid=stMain]');"
+    "if(mn&&isMob()){"
+    "mn.style.setProperty('margin-left','0','important');"
+    "mn.style.setProperty('width','100%','important');}}"
+    # Sidebar state: collapse button exists only when sidebar is open
+    "function isSbOpen(){return !!d.querySelector('[data-testid=stSidebarCollapseButton]');}"
+    "function openSb(){"
+    "var b=d.querySelector('[data-testid=stSidebarCollapsedControl] button');"
+    "if(b)b.click();}"
+    "function closeSb(){"
+    "var b=d.querySelector('[data-testid=stSidebarCollapseButton] button');"
+    "if(b)b.click();}"
+    # Backdrop (appears between sidebar and main content)
+    "function showBd(){"
     "if(d.getElementById('nf-backdrop'))return;"
     "var bd=d.createElement('div');"
     "bd.id='nf-backdrop';"
-    "bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);';"
-    "bd.onclick=function(){var cb=d.querySelector('[data-testid=stSidebarCollapseButton] button');if(cb)cb.click();};"
-    "d.body.insertBefore(bd,d.body.firstChild);}"
-    "function rmBd(){var bd=d.getElementById('nf-backdrop');if(bd)bd.remove();}"
-    "function bindBtns(){"
-    "var exp=d.querySelector('[data-testid=stSidebarCollapsedControl] button');"
-    "var col=d.querySelector('[data-testid=stSidebarCollapseButton] button');"
-    "if(exp&&!exp.__nfBound){exp.__nfBound=1;exp.addEventListener('click',function(){setTimeout(makeBd,50);});}"
-    "if(col&&!col.__nfBound){col.__nfBound=1;col.addEventListener('click',function(){setTimeout(rmBd,50);});}}"
-    "bindBtns();setTimeout(bindBtns,500);setTimeout(bindBtns,1500);}"
+    "bd.style.cssText='position:fixed;inset:0;top:52px;background:rgba(0,0,0,.55);z-index:1040;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);';"
+    "bd.onclick=closeSb;"
+    "d.body.appendChild(bd);}"
+    "function hideBd(){var bd=d.getElementById('nf-backdrop');if(bd)bd.remove();}"
+    # Custom topbar: fixed dark bar + SVG hamburger button, injected into body
+    "function setupBar(){"
+    "if(!isMob()||d.getElementById('nf-bar'))return;"
+    "var bar=d.createElement('div');"
+    "bar.id='nf-bar';"
+    "bar.style.cssText='position:fixed;top:0;left:0;right:0;height:52px;"
+    "background:rgba(8,9,14,.97);z-index:1100;display:flex;align-items:center;"
+    "padding:0 6px;border-bottom:1px solid rgba(255,255,255,.06);"
+    "-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);';"
+    "var btn=d.createElement('button');"
+    "btn.style.cssText='width:44px;height:44px;background:transparent;border:none;"
+    "cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0;';"
+    "var ns='http://www.w3.org/2000/svg';"
+    "var svg=d.createElementNS(ns,'svg');"
+    "svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','22');svg.setAttribute('height','22');"
+    "svg.setAttribute('fill','none');svg.setAttribute('stroke','rgba(240,240,245,.8)');"
+    "svg.setAttribute('stroke-width','2.5');svg.setAttribute('stroke-linecap','round');"
+    "[[3,7,21,7],[3,12,21,12],[3,17,21,17]].forEach(function(c){"
+    "var l=d.createElementNS(ns,'line');"
+    "l.setAttribute('x1',c[0]);l.setAttribute('y1',c[1]);"
+    "l.setAttribute('x2',c[2]);l.setAttribute('y2',c[3]);"
+    "svg.appendChild(l);});"
+    "btn.appendChild(svg);"
+    "btn.onclick=function(){if(isSbOpen())closeSb();else openSb();};"
+    "bar.appendChild(btn);"
+    "d.body.appendChild(bar);}"
+    # Sync backdrop with sidebar state
+    "function syncBd(){if(!isMob()){hideBd();return;}if(isSbOpen())showBd();else hideBd();}"
+    # Boot sequence
     "p();[80,300,700,1500].forEach(function(ms){setTimeout(p,ms)});"
-    "setTimeout(setupBackdrop,300);"
-    "var t;new MutationObserver(function(){clearTimeout(t);t=setTimeout(function(){p();},25)})"
-    '.observe(d.body,{childList:true,subtree:true})})()"></div>'
+    "setTimeout(setupBar,100);"
+    "[300,700,1500,3000].forEach(function(ms){setTimeout(function(){setupBar();syncBd();},ms)});"
+    # Watch DOM for sidebar open/close and page navigation
+    "var t;new MutationObserver(function(){clearTimeout(t);t=setTimeout(function(){"
+    "p();if(isMob()){setupBar();syncBd();}},25);"
+    "}).observe(d.body,{childList:true,subtree:true});"
+    "})()\">"
+    "</div>"
 )
 
 
