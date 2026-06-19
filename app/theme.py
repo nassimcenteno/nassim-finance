@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 from datetime import datetime
 import calendar as _cal
 
@@ -78,27 +77,89 @@ html, body { margin:0; padding:0; }
   color: #F0F0F5 !important;
 }
 
-/* Hide ALL Streamlit chrome incl. native header — custom mobile topbar is injected
-   via components.html (real iframe JS that survives Streamlit Cloud's sanitizer). */
+/* Hide Streamlit chrome. NOTE: stHeader and stToolbar are NOT hidden here —
+   on mobile they hold Streamlit's NATIVE sidebar-expand hamburger, which is the
+   only reliable way to toggle the sidebar on Streamlit Cloud (parent-DOM JS from
+   components.html / st.markdown is sandboxed/stripped there). We hide only the
+   unwanted toolbar items individually so just the hamburger remains. */
 #MainMenu, footer,
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
 [data-testid="stAppDeployButton"],
-[data-testid="stToolbar"],
-[data-testid="stHeader"],
+[data-testid="stMainMenuButton"],
 [data-testid="stHeaderFill"],
 [data-testid="stLogoSpacer"],
 [data-testid="stSidebarNav"],
 [data-testid="stSidebarNavItems"],
 [data-testid="stSidebarNavSeparator"] { display:none !important; }
 
-/* Mobile: responsive layout + sidebar as overlay below the injected 52px topbar */
+/* Desktop: no header needed (sidebar is always visible) */
+@media (min-width: 769px) {
+  [data-testid="stHeader"]  { display:none !important; }
+  [data-testid="stToolbar"] { display:none !important; }
+}
+
+/* Mobile: native header styled as a clean dark fintech topbar + native hamburger */
 @media (max-width: 768px) {
+  [data-testid="stHeader"] {
+    display: flex !important;
+    align-items: center !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    background: rgba(8,9,14,.98) !important;
+    border-bottom: 1px solid rgba(255,255,255,.07) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    backdrop-filter: blur(16px) !important;
+    padding: 0 6px !important;
+    z-index: 1000 !important;
+  }
+  /* Brand label in the topbar */
+  [data-testid="stHeader"]::after {
+    content: "Nassim Finance";
+    position: absolute;
+    left: 58px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; font-weight: 700; color: #F0F0F5; letter-spacing: -.02em;
+    pointer-events: none;
+  }
+  /* Toolbar holds the native hamburger — pin it top-left */
+  [data-testid="stToolbar"] {
+    display: flex !important;
+    align-items: center !important;
+    position: absolute !important;
+    left: 4px !important; right: auto !important; top: 4px !important;
+    padding: 0 !important;
+  }
+  /* The native sidebar-expand hamburger — force visible + touch-sized */
+  [data-testid="stExpandSidebarButton"] {
+    display: inline-flex !important;
+    width: 44px !important; height: 44px !important;
+    min-width: 44px !important; min-height: 44px !important;
+    align-items: center !important; justify-content: center !important;
+    padding: 0 !important;
+    background: transparent !important; border: none !important;
+  }
+  /* Replace the native » glyph with a proper 3-bar hamburger */
+  [data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] {
+    font-size: 0 !important;
+    position: relative !important;
+    width: 22px !important; height: 16px !important;
+    display: inline-block !important;
+  }
+  [data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"]::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 50% !important; top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 22px !important; height: 2px !important;
+    background: #F0F0F5 !important;
+    border-radius: 2px !important;
+    box-shadow: 0 -7px 0 #F0F0F5, 0 7px 0 #F0F0F5 !important;
+  }
   /* Content clears the fixed 52px topbar — fixes the top gap */
   [data-testid="stMainBlockContainer"] {
     padding: 64px 14px 48px !important;
   }
-  /* Sidebar overlay: sits below the topbar, above the backdrop */
+  /* Sidebar overlay below the topbar; its native « close button stays usable */
   [data-testid="stSidebar"] {
     top: 52px !important;
     height: calc(100vh - 52px) !important;
@@ -447,89 +508,9 @@ _LAYOUT_PATCH = (
 )
 
 
-# Mobile topbar + hamburger, injected via components.html (real iframe JS — runs on
-# Streamlit Cloud, unlike st.markdown which strips event handlers). The iframe is
-# same-origin (srcdoc) so it can reach window.parent.document, build a fixed topbar
-# in the parent body, and toggle the sidebar by clicking Streamlit's native (hidden)
-# expand/collapse buttons — which respond to .click() even while display:none.
-_MOBILE_NAV = r"""
-<script>
-(function(){
-  var pw = window.parent, pd = pw.document;
-  function q(s){ return pd.querySelector(s); }
-  function isMob(){ return pw.innerWidth <= 768; }
-  function cleanup(){
-    var b = pd.getElementById('nf-bar'); if(b) b.remove();
-    var bd = pd.getElementById('nf-backdrop'); if(bd) bd.remove();
-  }
-  function sbOpen(){
-    var sb = q('[data-testid="stSidebar"]'); if(!sb) return false;
-    var r = sb.getBoundingClientRect();
-    return r.width > 0 && r.left > -20 && r.right > 20;
-  }
-  function openSb(){ var b = q('[data-testid="stExpandSidebarButton"]'); if(b) b.click(); }
-  function closeSb(){
-    var b = q('[data-testid="stSidebarCollapseButton"] button')
-         || q('[data-testid="stSidebarCollapseButton"]');
-    if(b) b.click();
-  }
-  function showBd(){
-    if(pd.getElementById('nf-backdrop')) return;
-    var bd = pd.createElement('div'); bd.id = 'nf-backdrop';
-    bd.style.cssText = 'position:fixed;left:0;right:0;top:52px;bottom:0;'
-      + 'background:rgba(0,0,0,.5);z-index:999990;';
-    bd.addEventListener('click', function(){ closeSb(); setTimeout(sync,80); });
-    pd.body.appendChild(bd);
-  }
-  function hideBd(){ var bd = pd.getElementById('nf-backdrop'); if(bd) bd.remove(); }
-  function sync(){ if(!isMob()){ hideBd(); return; } if(sbOpen()) showBd(); else hideBd(); }
-  function build(){
-    if(!isMob()){ cleanup(); return; }
-    if(!pd.getElementById('nf-bar')){
-      var bar = pd.createElement('div'); bar.id = 'nf-bar';
-      bar.style.cssText = 'position:fixed;top:0;left:0;right:0;height:52px;'
-        + 'background:rgba(8,9,14,.98);z-index:1000000;display:flex;align-items:center;'
-        + 'padding:0 6px;border-bottom:1px solid rgba(255,255,255,.07);'
-        + '-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);';
-      var btn = pd.createElement('button'); btn.setAttribute('aria-label','Menu');
-      btn.style.cssText = 'width:44px;height:44px;background:transparent;border:none;'
-        + 'cursor:pointer;display:flex;align-items:center;justify-content:center;'
-        + 'border-radius:9px;padding:0;flex-shrink:0;';
-      btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" '
-        + 'stroke="#F0F0F5" stroke-width="2.4" stroke-linecap="round">'
-        + '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>'
-        + '<line x1="3" y1="18" x2="21" y2="18"/></svg>';
-      btn.addEventListener('click', function(){
-        if(sbOpen()){ closeSb(); } else { openSb(); }
-        setTimeout(sync,80); setTimeout(sync,260);
-      });
-      bar.appendChild(btn);
-      var lbl = pd.createElement('div');
-      lbl.style.cssText = 'margin-left:2px;font-size:14px;font-weight:700;'
-        + 'color:#F0F0F5;letter-spacing:-.02em;';
-      lbl.textContent = 'Nassim Finance';
-      bar.appendChild(lbl);
-      pd.body.appendChild(bar);
-    }
-    sync();
-  }
-  build();
-  [200,600,1200,2500].forEach(function(ms){ setTimeout(build, ms); });
-  if(!pw.__nfObs){
-    pw.__nfObs = 1; var t;
-    new pw.MutationObserver(function(){ clearTimeout(t); t = setTimeout(build, 60); })
-      .observe(pd.body, {childList:true, subtree:true});
-    pw.addEventListener('resize', build);
-  }
-})();
-</script>
-"""
-
-
 def inject_css() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
     st.markdown(_LAYOUT_PATCH, unsafe_allow_html=True)
-    components.html(_MOBILE_NAV, height=0)
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
