@@ -160,18 +160,19 @@ html, body { margin:0; padding:0; }
   }
 }
 
-/* Fix main content top gap — the actual block container testid in Streamlit 1.58 */
-[data-testid="stMainBlockContainer"] { padding-top: 24px !important; }
-/* Legacy selector in case .block-container class still exists */
-.main .block-container { padding-top: 24px !important; }
+/* Fix main content top gap — desktop only */
+@media (min-width: 769px) {
+  [data-testid="stMainBlockContainer"] { padding-top: 24px !important; }
+  .main .block-container { padding-top: 24px !important; }
 
-/* Collapse stSidebarHeader to zero — JS backup below guarantees it */
-[data-testid="stSidebarHeader"] {
-  height: 0 !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  /* Collapse stSidebarHeader to zero on desktop only */
+  [data-testid="stSidebarHeader"] {
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
 }
 
 [data-testid="stAppViewContainer"],
