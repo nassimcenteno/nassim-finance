@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 from datetime import datetime
 import calendar as _cal
@@ -638,7 +639,7 @@ def render_sidebar(mes_key: str = "mes_global") -> str:
         )
 
         # Dark mode toggle
-        toggle_label = "☀️  Claro" if d else "🌙  Oscuro"
+        toggle_label = "Modo claro" if d else "Modo oscuro"
         if st.button(toggle_label, key="_nf_theme", use_container_width=True):
             st.session_state.dark_mode = not d
             st.rerun()
