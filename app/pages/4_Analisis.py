@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from tools.sheets_client import get_all_gastos
 from app.theme import (
     inject_css, render_sidebar, topbar, stat_cards, section_hdr, cat_list_rows,
-    fmt_month, ACCENT, GREEN, RED, AMBER, TXT, TXT3, PLOTLY_GLASS, PLOTLY_AXIS, CAT_META,
+    fmt_month, get_plotly_theme, ACCENT, GREEN, RED, AMBER, TXT, TXT3, CAT_META,
 )
 
 st.set_page_config(page_title="Análisis · Nassim Finance",
@@ -74,14 +74,15 @@ fig.add_trace(go.Scatter(
     marker=dict(color=dot_colors, size=8, line=dict(color="#08090E", width=2)),
     hovertemplate="<b>%{x}</b><br>S/ %{y:,.0f}<extra></extra>",
 ))
+_glass, _axis = get_plotly_theme()
 fig.update_layout(
-    **PLOTLY_GLASS,
+    **_glass,
     title=dict(text="Gasto mensual histórico",
                font=dict(size=12, color=TXT, family="system-ui"),
                x=0.02, xanchor="left", pad=dict(t=8, l=6)),
     height=210, showlegend=False,
-    xaxis=dict(**PLOTLY_AXIS, title=""),
-    yaxis=dict(**PLOTLY_AXIS, title=""),
+    xaxis=dict(**_axis, title=""),
+    yaxis=dict(**_axis, title=""),
     margin=dict(l=16, r=16, t=44, b=20),
 )
 st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})

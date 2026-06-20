@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from tools.sheets_client import CATEGORIES, get_gastos, get_presupuesto
 from app.theme import (
     inject_css, render_sidebar, topbar, stat_cards, cat_list_rows, section_hdr,
-    fmt_month, ACCENT, GREEN, RED, AMBER, TXT, TXT3, PLOTLY_GLASS, PLOTLY_AXIS, CAT_META, S1, BORDER,
+    fmt_month, get_plotly_theme, ACCENT, GREEN, RED, AMBER, TXT, TXT3, CAT_META, S1, BORDER,
 )
 
 st.set_page_config(page_title="Por Categoría · Nassim Finance",
@@ -94,8 +94,9 @@ with col_pie:
         marker=dict(colors=DONUT_COLORS, line=dict(color="#08090E", width=2)),
         hovertemplate="<b>%{label}</b><br>S/ %{value:,.0f} · %{percent}<extra></extra>",
     ))
+    _glass, _axis = get_plotly_theme()
     fig_pie.update_layout(
-        **PLOTLY_GLASS,
+        **_glass,
         title=dict(text="Distribución", font=dict(size=12, color=TXT, family="system-ui"),
                    x=0.02, xanchor="left", pad=dict(t=8, l=6)),
         height=280, showlegend=False,

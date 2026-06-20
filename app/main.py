@@ -11,8 +11,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.sheets_client import CATEGORIES, get_gastos, get_presupuesto
 from app.theme import (
     inject_css, render_sidebar, topbar, hero_card, stat_cards,
-    cat_list_rows, section_hdr, fmt_month,
-    ACCENT, ACCENT_LO, GREEN, RED, AMBER, TXT, TXT3, PLOTLY_GLASS, PLOTLY_AXIS, CAT_META,
+    cat_list_rows, section_hdr, fmt_month, get_plotly_theme,
+    ACCENT, ACCENT_LO, GREEN, RED, AMBER, TXT, TXT3, CAT_META,
 )
 
 st.set_page_config(
@@ -111,14 +111,15 @@ if not df_g.empty:
         marker=dict(color=ACCENT, size=7, line=dict(color="#08090E", width=2)),
         showlegend=False, hoverinfo="skip",
     ))
+    _glass, _axis = get_plotly_theme()
     fig.update_layout(
-        **PLOTLY_GLASS,
+        **_glass,
         title=dict(text=f"Gasto acumulado — {fmt_month(mes)}",
                    font=dict(size=12, color=TXT, family="system-ui"),
                    x=0.02, xanchor="left", pad=dict(t=8, l=6)),
         height=180, showlegend=False,
-        xaxis=dict(**PLOTLY_AXIS, dtick=3, title=""),
-        yaxis=dict(**PLOTLY_AXIS, title=""),
+        xaxis=dict(**_axis, dtick=3, title=""),
+        yaxis=dict(**_axis, title=""),
         margin=dict(l=16, r=16, t=44, b=20),
     )
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})

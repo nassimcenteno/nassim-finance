@@ -16,7 +16,6 @@ inject_css()
 render_sidebar()
 topbar("Ingresar Gasto", "Registra un nuevo gasto")
 
-# Page CSS: form as hero card + big monto + mic button secondary style
 st.markdown("""
 <style>
 [data-testid="stForm"] {
@@ -27,13 +26,19 @@ st.markdown("""
     max-width: 520px !important;
     margin: 16px auto 0 !important;
 }
-[data-testid="stForm"] [data-testid="stNumberInput"] input {
-    font-size: 36px !important;
+/* Big monto text input */
+[data-testid="stForm"] input[placeholder="0.00"] {
+    font-size: 32px !important;
     font-weight: 800 !important;
     letter-spacing: -.03em !important;
     padding-top: 14px !important;
     padding-bottom: 14px !important;
     line-height: 1 !important;
+    /* re-enable pointer events (overrides the selectbox rule) */
+    pointer-events: auto !important;
+    caret-color: auto !important;
+    user-select: auto !important;
+    -webkit-user-select: auto !important;
 }
 @media (max-width: 768px) {
     [data-testid="stForm"] {
@@ -41,6 +46,9 @@ st.markdown("""
         padding: 24px 18px 20px !important;
         margin: 8px 0 0 !important;
         border-radius: 16px !important;
+    }
+    [data-testid="stForm"] input[placeholder="0.00"] {
+        font-size: 24px !important;
     }
     [data-testid="stForm"] [data-testid="stHorizontalBlock"] {
         flex-direction: column !important;
@@ -72,11 +80,17 @@ with st.form("form_manual", clear_on_submit=True):
         f'<div style="font-size:9px;font-weight:700;color:{TXT3};text-transform:uppercase;'
         f'letter-spacing:.14em;margin-bottom:6px">Monto</div>'
     )
-    monto = st.number_input(
-        "Monto", min_value=0.0, step=0.01,
-        value=float(pf.get("monto") or 0.0), format="%.2f",
-        label_visibility="collapsed",
+    # text_input avoids Streamlit number_input's digit-shifting behavior on iOS.
+    # We parse manually so "12.3" and "12,3" both register as 12.30.
+    prefill_monto = f"{pf['monto']:.2f}" if pf.get("monto") else ""
+    monto_raw = st.text_input(
+        "Monto", value=prefill_monto, placeholder="0.00",
+        label_visibility="collapsed", key="monto_field",
     )
+    try:
+        monto = max(0.0, round(float(monto_raw.replace(",", ".")), 2))
+    except (ValueError, AttributeError):
+        monto = 0.0
 
     col1, col2 = st.columns(2)
     with col1:
@@ -106,9 +120,7 @@ with st.form("form_manual", clear_on_submit=True):
 
     col_save, col_mic = st.columns([5, 1])
     with col_save:
-        submitted = st.form_submit_button(
-            "Guardar gasto", type="primary", use_container_width=True,
-        )
+        submitted = st.form_submit_button("Guardar gasto", type="primary", use_container_width=True)
     with col_mic:
         mic_clicked = st.form_submit_button("🎤", use_container_width=True)
 
@@ -125,7 +137,7 @@ if submitted:
                 "fecha":       str(fecha),
                 "categoria":   categoria,
                 "descripcion": descripcion.strip(),
-                "monto":       round(monto, 2),
+                "monto":       monto,
                 "metodo":      "manual",
             })
             st.session_state.prefill = {}
@@ -138,25 +150,21 @@ if mic_clicked:
     st.session_state.show_audio = not st.session_state.show_audio
     st.rerun()
 
-# ── Audio recorder (shown below the card when mic is active) ──────────────────
+# ── Audio recorder ────────────────────────────────────────────────────────────
 if st.session_state.show_audio:
     st.markdown(
         f'<div style="max-width:520px;margin:14px auto 0;background:{S1};'
         f'border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:24px 28px">'
         f'<div style="font-size:9px;font-weight:700;color:{TXT3};text-transform:uppercase;'
         f'letter-spacing:.14em;margin-bottom:12px">Grabar voz</div>'
-        f'<p style="font-size:13px;color:rgba(240,240,245,.5);margin:0 0 16px">Describe tu gasto en voz alta. '
-        f'Ejemplo: <em>"Gasté cincuenta soles en almuerzo"</em></p>'
+        f'<p style="font-size:13px;color:rgba(240,240,245,.5);margin:0 0 16px">Describe tu gasto '
+        f'en voz alta. Ejemplo: <em>"Gasté cincuenta soles en almuerzo"</em></p>'
         f'</div>',
         unsafe_allow_html=True,
     )
     try:
         from streamlit_mic_recorder import mic_recorder
-        audio = mic_recorder(
-            start_prompt="Grabar",
-            stop_prompt="Detener",
-            key="mic",
-        )
+        audio = mic_recorder(start_prompt="Grabar", stop_prompt="Detener", key="mic")
         if audio and audio.get("bytes"):
             with st.spinner("Transcribiendo..."):
                 try:
@@ -164,7 +172,6 @@ if st.session_state.show_audio:
                     texto = transcribe(audio["bytes"])
                 except RuntimeError as e:
                     st.error(str(e)); texto = ""
-
             if texto:
                 st.markdown(
                     f'<div style="max-width:520px;margin:10px auto 0;background:{S1};'
@@ -185,6 +192,5 @@ if st.session_state.show_audio:
                 st.rerun()
             else:
                 st.warning("No se detectó voz. Intenta en un ambiente más silencioso.")
-
     except ImportError:
         st.warning("Instala `streamlit-mic-recorder` para usar esta función.")
